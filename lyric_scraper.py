@@ -16,11 +16,6 @@ from bs4 import BeautifulSoup
 import time
 import random
 
-import socks
-import socket
-
-import stem.process
-
 
 def get_random_profile():
     #list of potential user agents
@@ -54,50 +49,68 @@ def get_lyrics(artist):
     artist = re.sub('[^A-Za-z0-9]+', "", artist)
     if artist.startswith("the"):
         artist = artist[3:]
-    
-    #collect and parse artist page
-    base_url="https://www.azlyrics.com/m/"+artist+".html"
-    headers=get_random_profile()
-    page=requests.get(base_url,headers=headers)
-    soup=BeautifulSoup(page.text,'html.parser')
-    
-    #pull all text from the album div
-    all_songs=soup.find('div',id='listAlbum')
-    song_list=all_songs.find_all(href=True)
-    
-    #pull link for each song
-    #then grab lyrics from the links
-    lyrics_list=[]
-    #set up the partitions of where the lyrics lie on the page
-    beginning_marker = '<!-- Usage of azlyrics.com content by any third-party lyrics provider is prohibited by our licensing agreement. Sorry about that. -->'
-    end_marker = '<!-- MxM banner -->'
-    
-
-    
-    for song in song_list:        
-        #insert user agent in headers to mimic browser user
+    try:
+        #collect and parse artist page
+        base_url="https://www.azlyrics.com/m/"+artist+".html"
         headers=get_random_profile()
+        page=requests.get(base_url,headers=headers)
+        soup=BeautifulSoup(page.text,'html.parser')
         
-        #get link for each song
-        link=song.attrs['href']
+        #pull all text from the album div
+        all_songs=soup.find('div',id='listAlbum')
+        song_list=all_songs.find_all(href=True)
         
-        if link.startswith('..'):
-            link=link.replace('..','http://www.azlyrics.com')
+        #pull link for each song
+        #then grab lyrics from the links
+        lyrics_list=[]
+        #set up the partitions of where the lyrics lie on the page
+        beginning_marker = '<!-- Usage of azlyrics.com content by any third-party lyrics provider is prohibited by our licensing agreement. Sorry about that. -->'
+        end_marker = '<!-- MxM banner -->'   
+    
+        i=1
+        for song in song_list:        
+            #insert user agent in headers to mimic browser user
+            headers=get_random_profile()
+            
+            #get link for each song
+            link=song.attrs['href']
+            
+            if link.startswith('..'):
+                link=link.replace('..','http://www.azlyrics.com')
+            
+            try:      
+            #get the lyrics text for each link
+                lyric_page=requests.get(link,headers=headers)
+                soup=BeautifulSoup(lyric_page.text,'html.parser')
+                soup=str(soup)        
+                lyrics=soup.split(beginning_marker)[1]
+                lyrics=lyrics.split(end_marker)[0]
+                lyrics_list.append(lyrics)
+                
+                print("imported song number ",i,"of ",len(song_list),"for artist ",artist)
+                i=i+1
+            
+            except ConnectionError:
+                
+                print("connection error for song ",i,"of ",len(song_list),"for artist ",artist)
+            
+            #intentional random delay to not overwhelm the servers
+            time.sleep(random.randint(10,20))
+    
+    except ConnectionError:
+        print("Connection Error for artist ", artist)
+        time.sleep(random.randint(15,30))
         
-        #get the lyrics text for each link
-        lyric_page=requests.get(link,headers=headers)
-        soup=BeautifulSoup(lyric_page.text,'html.parser')
-        soup=str(soup)        
-        lyrics=soup.split(beginning_marker)[1]
-        lyrics=lyrics.split(end_marker)[0]
-        lyrics_list.append(lyrics)
-        print(lyrics)
-        
-        #intentional random delay to not overwhelm the servers
-        time.sleep(random.randint(10,20))
     time.sleep(random.randint(15,30))
     
     return lyrics_list
 
- 
-migos_lyrics=get_lyrics('migos')
+
+#run with specified trap artists
+trap_artists=['migos','2 Chainz','Gucci Mane','Waka Flocka Flame','Young Thug',
+              'Fetty Wap','Lil Uzi Vert','Lil Yachty','21 Savage','Young Jeezy','Rae Sremmurd']
+
+all_lyrics=[]
+for artist in trap_artists:
+    lyric=get_lyrics(artist)
+    all_lyrics.append(lyric)
