@@ -95,7 +95,7 @@ def get_lyrics(artist):
                 lyrics=lyrics.split(end_marker)[0]
                 lyric_list.append(lyrics)
                 
-                print("imported song number ",i,"of ",len(song_list),"for artist ",artist)
+                print("imported song number ",i,"of ",len(song_list),"for artist",artist)
                 i=i+1
             
             except:
