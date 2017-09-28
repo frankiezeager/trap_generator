@@ -47,11 +47,18 @@ def get_random_profile():
 def get_lyrics(artist):
     #clean artist name to match AZ Lyrics url
     artist = re.sub('[^A-Za-z0-9]+', "", artist)
+    artist=artist.lower()
     if artist.startswith("the"):
         artist = artist[3:]
+    #initialize song list   
+    song_list=[]
     try:
         #collect and parse artist page
-        base_url="https://www.azlyrics.com/m/"+artist+".html"
+        if artist[0].isdigit():
+            first_letter='19'
+        else:
+            first_letter=artist[0]
+        base_url="https://www.azlyrics.com/"+first_letter+"/"+artist+".html"
         headers=get_random_profile()
         page=requests.get(base_url,headers=headers)
         soup=BeautifulSoup(page.text,'html.parser')
@@ -62,12 +69,13 @@ def get_lyrics(artist):
         
         #pull link for each song
         #then grab lyrics from the links
-        lyrics_list=[]
+        
         #set up the partitions of where the lyrics lie on the page
         beginning_marker = '<!-- Usage of azlyrics.com content by any third-party lyrics provider is prohibited by our licensing agreement. Sorry about that. -->'
         end_marker = '<!-- MxM banner -->'   
     
         i=1
+        lyric_list=[]
         for song in song_list:        
             #insert user agent in headers to mimic browser user
             headers=get_random_profile()
@@ -85,30 +93,30 @@ def get_lyrics(artist):
                 soup=str(soup)        
                 lyrics=soup.split(beginning_marker)[1]
                 lyrics=lyrics.split(end_marker)[0]
-                lyrics_list.append(lyrics)
+                lyric_list.append(lyrics)
                 
                 print("imported song number ",i,"of ",len(song_list),"for artist ",artist)
                 i=i+1
             
-            except ConnectionError:
+            except:
                 
-                print("connection error for song ",i,"of ",len(song_list),"for artist ",artist)
+                print("error for song ",i,"of ",len(song_list),"for artist ",artist)
             
             #intentional random delay to not overwhelm the servers
             time.sleep(random.randint(10,20))
     
-    except ConnectionError:
-        print("Connection Error for artist ", artist)
+    except :
+        print("Error for artist ", artist)
         time.sleep(random.randint(15,30))
         
     time.sleep(random.randint(15,30))
     
-    return lyrics_list
+    return lyric_list
 
 
 #run with specified trap artists
-trap_artists=['migos','2 Chainz','Gucci Mane','Waka Flocka Flame','Young Thug',
-              'Fetty Wap','Lil Uzi Vert','Lil Yachty','21 Savage','Young Jeezy','Rae Sremmurd']
+trap_artists=['2 Chainz','Gucci Mane','Waka Flocka Flame','Young Thug',
+              'Fetty Wap','Lil Uzi Vert','Lil Yachty','21 Savage','Young Jeezy','migos','Rae Sremmurd']
 
 all_lyrics=[]
 for artist in trap_artists:
