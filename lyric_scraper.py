@@ -15,7 +15,7 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import random
-
+import pickle
 
 def get_random_profile():
     #list of potential user agents
@@ -122,3 +122,5 @@ all_lyrics=[]
 for artist in trap_artists:
     lyric=get_lyrics(artist)
     all_lyrics.append(lyric)
+    
+pickle.dump(all_lyrics,open('trap_lyrics.p','wb'))
