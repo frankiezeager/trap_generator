@@ -18,7 +18,14 @@ import random
 import pickle
 
 def get_random_profile():
-    #list of potential user agents
+    """
+    Gets list of potential user agents.
+    Args: 
+        None
+    Returns:
+        string: a random user agent to mimic browser access
+    """
+    
     user_agents = [
     'Mozilla/5.0 (Windows; U; Windows NT 5.1; it; rv:1.8.1.11) Gecko/20071127 Firefox/2.0.0.11',
     'Opera/9.25 (Windows NT 5.1; U; en)',
@@ -45,6 +52,13 @@ def get_random_profile():
 
 
 def get_lyrics(artist):
+    """Function to access AZ Lyrics with random user profile and gather all song lyrics for an artist
+    Args:
+        artist(string): The artist you would like to gather all songs for
+    Returns:
+        list: a list of strings of the lyrics for each song
+    """
+    
     #clean artist name to match AZ Lyrics url
     artist = re.sub('[^A-Za-z0-9]+', "", artist)
     artist=artist.lower()
