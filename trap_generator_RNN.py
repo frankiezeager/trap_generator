@@ -104,5 +104,5 @@ while True:
     model.fit(X, y, batch_size=batch_size, verbose=1, epochs=1)
     num_epoch += 1
     print("Epoch number ", num_epoch)
-    generate_text(model, generate_length)
+    output_text(model, generate_length)
     ModelCheckpoint('model_chceckpoint_epoch_'+num_epoch+'.hdf5',save_best_only=True)
