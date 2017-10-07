@@ -56,13 +56,13 @@ for i in range(0,math.floor(len(lyrics)/seq_length)):
     y[i]=target_sequence
 
 #translate features into the form [sample, sequence, features]
-X=np.reshape(X_input,(len(X_input),seq_length,1))
+#X=np.reshape(X_input,(len(X_input),seq_length,1))
 #X=X_input.reshape(1,seq_length,1)
 #y=Y_input.reshape
 #normalize
-X=X/float(vocab_size)
+#X=X/float(vocab_size)
 #one hot encoding the data
-y=np_utils.to_categorical(y_input)
+#y=np_utils.to_categorical(y_input)
  
        
 def output_text(model, length=500):
