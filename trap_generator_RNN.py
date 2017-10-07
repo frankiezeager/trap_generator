@@ -16,6 +16,7 @@ from keras.layers import LSTM
 from keras.callbacks import ModelCheckpoint
 import numpy as np
 from keras.utils import np_utils
+import math
 #import lyrics
 lyrics=pickle.load(open('clean_lyrics.p','rb'))
 
@@ -35,16 +36,24 @@ batch_size=50000
 generate_length=850
 
 #prep data
-X_input=[]
-y_input=[]
+X=np.zeros((math.floor(len(lyrics)/seq_length),seq_length,vocab_size))
+y=np.zeros((math.floor(len(lyrics)/seq_length),seq_length,vocab_size))
 
-for i in range(0,len(lyrics)-seq_length,1):
+#given a sequence X, target sequence will be shifted by one space
+for i in range(0,math.floor(len(lyrics)/seq_length)):
     #create sequence of lyrics from full raw text
-    end=i+seq_length #find end of the lryics
-    x_seq=lyrics[i:end]
-    y_seq=lyrics[end]
-    X_input.append([char_to_ix[char] for char in x_seq]) #convert each letter in sequence to ix
-    y_input.append(char_to_ix[y_seq]) #convert letter to ix
+    x_seq=lyrics[i*seq_length:(i+1)*seq_length]
+    y_seq=lyrics[i*seq_length+1:(i+1)*seq_length+1]
+    X_ix=[char_to_ix[char] for char in x_seq] #convert each letter in sequence to ix
+    y_ix=[char_to_ix[char]for char in y_seq] #do the same for y
+    input_sequence=np.zeros((seq_length,vocab_size))
+    for j in range(seq_length):
+        input_sequence[j][X_ix[j]]=1
+    X[i]=input_sequence
+    target_sequence=np.zeros((seq_length,vocab_size))
+    for j in range(seq_length):
+        target_sequence[j][y_ix[j]]=1
+    y[i]=target_sequence
 
 #translate features into the form [sample, sequence, features]
 X=np.reshape(X_input,(len(X_input),seq_length,1))
@@ -87,10 +96,10 @@ def output_text(model, length=500):
     print("Final Output: \n")
     print(seed_text)
     return seed_text
-
+vocab_size=len(chars)
 #define model
 model=Sequential()
-model.add(LSTM(hidden_dimension,input_shape=(X.shape[1],X.shape[2]), return_sequences=True))
+model.add(LSTM(hidden_dimension,input_shape=(None,vocab_size), return_sequences=True))
 for i in range(layer_num-1):
     model.add(LSTM(hidden_dimension,return_sequences=True))
 model.add(TimeDistributed(Dense(vocab_size))) #add if you want to try many to many output (instead of character by character)
@@ -99,7 +108,7 @@ model.compile(loss="categorical_crossentropy", optimizer="adam")
 
 
 #see how bad the original model is
-print("initial text output: ")
+print("/n initial text output: ")
 output_text(model)
 
 num_epoch=0
@@ -108,7 +117,7 @@ text_file=open('text_file.txt','w')
 text_file.close()
 while True:
     print('\n\n')
-    model.fit(X, y, batch_size=batch_size, verbose=1, epochs=1)
+    model.fit(X, y, batch_size=batch_size, verbose=1)
     num_epoch += 1
     print("Epoch number ", num_epoch)
     predicted_text=output_text(model, generate_length)
