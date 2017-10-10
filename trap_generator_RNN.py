@@ -13,10 +13,11 @@ import pickle
 from keras.models import Sequential
 from keras.layers import Dense, Embedding,TimeDistributed,Activation
 from keras.layers import LSTM
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import History,Callback
 import numpy as np
 from keras.utils import np_utils
 import math
+
 #import lyrics
 lyrics=pickle.load(open('clean_lyrics.p','rb'))
 
@@ -24,15 +25,14 @@ chars = sorted(list(set(lyrics)))
 vocab_size=len(chars)
 
 #create mapping from characters to indexes and indexes to characters
-#ix_to_char = {ix:char for ix, char in enumerate(chars)}
-#char_to_ix = {char:ix for ix, char in enumerate(chars)}
 char_to_ix = dict((c, i) for i, c in enumerate(chars))
 ix_to_char = dict((i, c) for i, c in enumerate(chars))
+
 #create hyperparameters 
 seq_length=100
-hidden_dimension=256
-layer_num=3
-batch_size=50000
+hidden_dimension=64
+layer_num=2
+batch_size=1000
 generate_length=850
 
 #prep data
@@ -54,15 +54,6 @@ for i in range(0,math.floor(len(lyrics)/seq_length)):
     for j in range(seq_length):
         target_sequence[j][y_ix[j]]=1
     y[i]=target_sequence
-
-#translate features into the form [sample, sequence, features]
-#X=np.reshape(X_input,(len(X_input),seq_length,1))
-#X=X_input.reshape(1,seq_length,1)
-#y=Y_input.reshape
-#normalize
-#X=X/float(vocab_size)
-#one hot encoding the data
-#y=np_utils.to_categorical(y_input)
  
        
 def output_text(model, length=500):
@@ -75,35 +66,30 @@ def output_text(model, length=500):
         vocab_size: int. How long the vocab size is
     """
     #get random sample to start generating text
-
-    ix=np.random.randint(0,len(X)-1) #get random integer
-    sample=X_input[ix] #get the text from that point
+    ix=[np.random.randint(vocab_size)] #get random letter
+    y_char=[ix_to_char[ix[-1]]]
+    X=np.zeros((1,length,vocab_size))
     print("\n")
-    print("Random Text Seed from corpus: \n")
-    print(''.join(ix_to_char[index] for index in sample)) #print all the letters from the sample
-    print()
-    seed_text=''.join(ix_to_char[index] for index in sample)
+    #print(''.join(ix_to_char[index] for index in sample)) #print all the letters from the sample
+    #print()
+    #seed_text=''.join(ix_to_char[index] for index in sample)
     for i in range(length):
-        x=np.reshape(sample,(1,len(sample),1)) #get in form [samples,sequence,features]
-        x=x/float(vocab_size) #normalize
-        pred=model.predict(x)[0] #make prediction for next letter
-        index=np.argmax(pred,axis=1)[-1]
-        result=ix_to_char[index]
-        seed_text=seed_text+result#append to text
-        sample.append(index)#add to the sample 
-        sample=sample[1:] #removing first character to keep consistent length
-        
-    print("Final Output: \n")
-    print(seed_text)
-    return seed_text
+        X[0, i, :][ix[-1]] = 1
+        #print(ix_to_char[ix[-1]], end="")
+        ix = np.argmax(model.predict(X[:, :i+1, :])[0], 1)
+        y_char.append(ix_to_char[ix[-1]])
+    return ('').join(y_char)
 vocab_size=len(chars)
+
+
+
 #define model
 model=Sequential()
 model.add(LSTM(hidden_dimension,input_shape=(None,vocab_size), return_sequences=True))
 for i in range(layer_num-1):
     model.add(LSTM(hidden_dimension,return_sequences=True))
-model.add(TimeDistributed(Dense(vocab_size))) #add if you want to try many to many output (instead of character by character)
-#model.add(Dense(y.shape[1], activation='softmax'))
+model.add(TimeDistributed(Dense(vocab_size)))
+model.add(Activation('softmax'))
 model.compile(loss="categorical_crossentropy", optimizer="adam")
 
 
@@ -113,16 +99,30 @@ output_text(model)
 
 num_epoch=0
 
+#define history loss function
+class LossHistory(Callback):
+    def on_train_begin(self,logs={}):
+        self.losses = []
+
+    def on_batch_end(self, batch, logs={}):
+        self.losses.append(logs.get('loss'))
+history=LossHistory()
+
+#write initial text file where output will be appended
 text_file=open('text_file.txt','w')
 text_file.close()
 while True:
     print('\n\n')
-    model.fit(X, y, batch_size=batch_size, verbose=1)
+    #fit LSTM Model
+    model.fit(X, y, batch_size=batch_size, verbose=2,nb_epoch=1,callbacks=[history])
     num_epoch += 1
     print("Epoch number ", num_epoch)
     predicted_text=output_text(model, generate_length)
     text_file=open('text_file.txt','a')
-    text_file.write('epoch number '+ num_epoch+ '\n\n\n' + predicted_text)
+    text_file.write('\n\n epoch number '+ str(num_epoch)+ '\n'+'loss: '+str(history.losses)+'\n'+ 'predicted text: '+'\n'+ predicted_text)
     text_file.close()
-    #pickle.dump(predicted_text,open('text_'+str(num_epoch)+'.p','wb'))
-    ModelCheckpoint('model_chceckpoint_epoch_'+str(num_epoch)+'.hdf5',save_best_only=True)
+    #print predicted output so as to measure effectiveness of model
+    print("predicted text: ", predicted_text)
+    #print loss
+    #print(history.history)
+    model.save('model_checkpoint_epoch_'+str(num_epoch)+'.hdf5')
