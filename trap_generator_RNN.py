@@ -92,13 +92,7 @@ def output_text(model, length=500,seed="Rain drop (drip), drop top"):
         seq_length: int. Input size for model
     """
     generated=''
-    if len(seed)>seq_length:
-        sequence=seed[:-seq_length] #truncate to input size
-    if len(seed)<seq_length:
-        #pad to input size
-        sequence=seed.rjust(seq_length)
-    else:
-        sequence=seed
+    sequence=seed
         
     generated+=seed
     
