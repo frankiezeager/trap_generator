@@ -17,6 +17,7 @@ import numpy as np
 from keras.utils import np_utils
 import math
 
+
 #import lyrics
 lyrics=pickle.load(open('clean_lyrics.p','rb'))
 
@@ -33,10 +34,10 @@ char_to_ix = dict((c, i) for i, c in enumerate(chars))
 ix_to_char = dict((i, c) for i, c in enumerate(chars))
 
 #create hyperparameters 
-seq_length=40
-hidden_dimension=64
+seq_length=100
+hidden_dimension=256
 layer_num=3
-batch_size=2000
+batch_size=1000
 generate_length=850
 
 #prep data so as to run faster
@@ -97,7 +98,8 @@ def output_text(model, length=500,seed="Rain drop (drip), drop top"):
         #pad to input size
         sequence=seed.rjust(seq_length)
     else:
-        sequence=seed       
+        sequence=seed
+        
     generated+=seed
     
     for i in range(length):
@@ -131,7 +133,7 @@ model.compile(loss="categorical_crossentropy", optimizer="rmsprop")
 
 
 #see how bad the original model is
-print("/n initial text output: ")
+print("\n initial text output: ")
 output_text(model)
 
 num_epoch=0
@@ -162,4 +164,4 @@ while True:
     print("predicted text: ", predicted_text)
     #for every 20th epoch, save the model (to save hd space)
     if num_epoch%20==0:
-        model.save('model_checkpoint_epoch_'+str(num_epoch)+'.hdf5')
+        model.save('model_checkpoint_epoch_'+str(num_epoch)+'.h5')
