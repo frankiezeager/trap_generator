@@ -11,6 +11,7 @@ import pickle
 #from html.parser import HTMLParser
 import re
 
+
 lyrics=pickle.load(open('trap_lyrics.p','rb'))
 
 
@@ -20,11 +21,50 @@ for sublist in lyrics:
     for item in sublist:
         flattened_lyrics.append(item)
 flattened_lyrics=''.join(flattened_lyrics)
-#now we have the ~2100 songs lyrics in a list from the 11 artists
+#now we have the ~2100 songs lyrics in one string
 
 #remove the <br />and <div/> tags (but keep the new line characters to maintain format)
-clean_lyrics=re.sub('<[^<]+?>', '', flattened_lyrics)
+clean_lyrics=re.sub(r'<[^<]+?>', '', flattened_lyrics)
 
-#remove characters \xa0, \x82,\x99,\x95,\x93,\x94,'\x9c','\x83','\x80',\x8b',\xad,\x98,\x9d'
+#remove things like [Chorus:]
+clean_lyrics=re.sub(r'\[.+\]', '', clean_lyrics)
+
+#remove encoding characters like \x86
+clean_lyrics=re.sub(r'[^\x00-\x7f]','',clean_lyrics)
+clean_lyrics=re.sub(r'\#','',clean_lyrics)
+#remove punctuation
+clean_lyrics=re.sub(r'[^A-Za-z0-9\s]','',clean_lyrics)
+
+
+
+
+#convert to lowercase
+clean_lyrics=clean_lyrics.lower()
+clean_lyrics[0:1000]
+'?' in clean_lyrics.split()
+#chars = sorted(list(set(clean_lyrics)))
 #list(set(re.sub('\\[x].{2}','',clean_lyrics)))
 pickle.dump(clean_lyrics,open('clean_lyrics.p','wb'))
+clean_list_lyrics = []
+### create list of lyrics as one giant string
+for artist in lyrics:
+    for i in artist:
+        #remove the <br />and <div/> tags (but keep the new line characters to maintain format)
+        lyric=re.sub(r'<[^<]+?>', '', i)
+
+        #remove things like [Chorus:]
+        lyric=re.sub(r'\[.+\]', '', lyric)
+
+        #remove encoding characters like \x86
+        lyric=re.sub(r'[^\x00-\x7f]','',lyric)
+
+        #remove punctuation
+        lyric=re.sub(r'\?|\!|\,|\.|\'|\"|\(|\)|\-','',lyric)
+
+
+        #convert to lowercase
+        lyric=lyric.lower()
+        clean_list_lyrics.append(lyric)
+
+clean_list_lyrics[0:10]
+pickle.dump(clean_list_lyrics,open('clean_list_lyrics.p','wb'))
