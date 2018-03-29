@@ -80,40 +80,14 @@ for lyric in list_lyrics:
 
 len(sequences)
 
-#### save data as train and test for training the rnn
-# random.shuffle(sequences)
-#
-# sequences[0][0]
-# #80%/20% split
-# import math
-# len_train = math.floor(len(sequences)*.80)
-# len_train
-# len(sequences)
-# train_data = sequences[:len_train]
-# test_data = sequences[len_train:]
-# lines_train = [s for sequence in train_data for s in sequence]
-# lines_test = [s for sequence in test_data for s in sequence]
-#
-# pickle.dump(lines_train,open('lines_train.p','wb'))
-# pickle.dump(lines_test,open('lines_test.p','wb'))
-####
-
 #now we have a list of each song, with a list containing the words in the song, split by sequence seq_length
 
 #unnest the list
 lines = [s for sequence in sequences for s in sequence]
 
-lines[0]
-
-
 print('Number of examples: ', len(lines))
 
-
 w2vmodel = Word2Vec(lines,min_count=1,iter=200)
-
-w2vmodel.wv.most_similar('bitch')
-
-w2vmodel.wv.most_similar('nigga')
 
 w2vmodel.wv.most_similar('dollar')
 
