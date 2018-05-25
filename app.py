@@ -11,8 +11,8 @@ from keras.layers import LSTM
 from wtforms import Form, TextField, TextAreaField, validators, StringField, SubmitField
 import re
 
-app = flask.Flask(__name__)
-app.config.from_object(__name__)
+application = flask.Flask(__name__)
+application.config.from_object(__name__)
 
 class ReusableForm(Form):
     seed = TextField('Seed:', validators=[validators.required()])
@@ -74,11 +74,11 @@ def clean_seed(seed):
     seed=re.sub(r'[^A-Za-z0-9\s]','',seed)
     return seed
 
-@app.route("/", methods=["GET"])
+@application.route("/", methods=["GET"])
 def serve_form():
     return render_template("form.html", form=ReusableForm(request.form))
 
-@app.route("/", methods=['POST'])
+@application.route("/", methods=['POST'])
 def generate_text(): # model, w2vmodel, length=75, max_seq_length=20, temp=1, seed="Rain drop drop top"):
     load_model()
     global w2vmodel
@@ -142,4 +142,4 @@ if __name__ == '__main__':
     print("* Loading Keras model and Flask starting server..."
         "please wait until server has fully started")
     load_model()
-    app.run()
+    application.run()
